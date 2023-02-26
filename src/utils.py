@@ -133,4 +133,28 @@ def ang2angr(ang_arr, r):
     return add_factor(ang_arr, r)
 
 def rotate_with_yaw(xyz_arr, angle):
-    pass
+    new_xyz_arr = np.zeros(xyz_arr.shape)
+    ang_rad = np.deg2rad(angle)
+    rotate_matrix = np.array([[np.cos(ang_rad), -1*np.sin(ang_rad), 0],
+                              [np.sin(ang_rad), np.cos(ang_rad),    0],
+                              [0,               0,                  1]])
+    if xyz_arr.ndim == 1:
+        new_xyz_arr = np.dot(rotate_matrix, xyz_arr)
+    else:
+        for usr in range(len(xyz_arr)):
+            new_xyz_arr[usr] = np.dot(rotate_matrix, xyz_arr[usr])
+    return new_xyz_arr
+
+def rotate_with_pitch(xyz_arr, angle):
+    new_xyz_arr = np.zeros(xyz_arr.shape)
+    ang_rad = np.deg2rad(angle)
+    rotate_matrix = np.array([[np.cos(ang_rad),    0, np.sin(ang_rad)],
+                              [0,                  1,               0],
+                              [-1*np.sin(ang_rad), 0, np.cos(ang_rad)]])
+    if xyz_arr.ndim == 1:
+        new_xyz_arr = np.dot(rotate_matrix, xyz_arr)
+    else:
+        for usr in range(len(xyz_arr)):
+            new_xyz_arr[usr] = np.dot(rotate_matrix, xyz_arr[usr])
+    return new_xyz_arr
+
