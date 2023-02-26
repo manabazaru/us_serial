@@ -19,15 +19,6 @@ def get_data_from_args(args):
         d3 = args[2]
     return d1, d2, d3
 
-def get_init_arr(arr):
-    if arr.ndim == 1:
-        new_arr = np.zeros(len(arr))
-    else:
-        arr_size = len(arr)
-        arr_factor_n = len(arr[0])
-        new_arr = np.zeros([arr_size, arr_factor_n])
-        return new_arr
-
 def get_data_in_arr(arr, d1, d2, d3):
     if arr.ndim == 1:
         arr[0] = d1
@@ -85,7 +76,7 @@ def calc_r(*args):
     return r
 
 def xyz2angr(xyz_arr):
-    angr_arr = get_init_arr(xyz_arr)
+    angr_arr = np.zeros(xyz_arr.shape)
     az = calc_az(xyz_arr)
     el = calc_el(xyz_arr)
     r = calc_r(xyz_arr)
@@ -93,7 +84,7 @@ def xyz2angr(xyz_arr):
     return angr_arr
 
 def angr2xyz(angr_arr):
-    xyz_arr = get_init_arr(angr_arr)
+    xyz_arr = np.zeros(angr_arr.shape)
     x = calc_x(angr_arr)
     y = calc_y(angr_arr)
     z = calc_z(angr_arr)
