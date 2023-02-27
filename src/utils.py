@@ -37,18 +37,36 @@ def ints2arr(*args):
         arr[arg_idx] = args[arg_idx]
     return arr
 
+def cut_last_factor(arr):
+    if arr.ndim == 1:
+        return arr[:len(arr)-1]
+    else:
+        return arr[:,:len(arr[0])-1]
+
+def add_factor(arr, factor):
+    if arr.ndim == 1:
+        new_arr = np.zeros(3)
+        new_arr[:2] = arr
+        new_arr[2] = factor
+    else:
+        size = len(arr)
+        new_arr = np.zeros([size,3])
+        new_arr[:,:2] = arr
+        new_arr[:,2] += factor
+    return new_arr
+
 def calc_x(*args):
     az, el, r = get_data_from_args(args)
     az_rad = np.deg2rad(az)
     el_rad = np.deg2rad(el)
-    x = r*np.cos(el_rad) * np.cos(az_rad)
+    x = r * np.cos(el_rad) * np.cos(az_rad)
     return x
 
 def calc_y(*args):
     az, el, r = get_data_from_args(args)
     az_rad = np.deg2rad(az)
     el_rad = np.deg2rad(el)
-    y = r*np.cos(el_rad) * np.sin(az_rad)
+    y = r * np.cos(el_rad) * np.sin(az_rad)
     return y
 
 def calc_z(*args):
@@ -90,24 +108,6 @@ def angr2xyz(angr_arr):
     z = calc_z(angr_arr)
     xyz_arr = get_data_in_arr(xyz_arr, x, y, z)
     return xyz_arr
-
-def cut_last_factor(arr):
-    if arr.ndim == 1:
-        return arr[:len(arr)-1]
-    else:
-        return arr[:,:len(arr[0])-1]
-
-def add_factor(arr, factor):
-    if arr.ndim == 1:
-        new_arr = np.zeros(3)
-        new_arr[:2] = arr
-        new_arr[2] = factor
-    else:
-        size = len(arr)
-        new_arr = np.zeros([size,3])
-        new_arr[:,:2] = arr
-        new_arr[:,2] += factor
-    return new_arr
 
 def xyz2xy(xyz_arr):
     xy_arr = cut_last_factor(xyz_arr)
