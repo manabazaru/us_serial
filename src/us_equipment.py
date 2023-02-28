@@ -3,7 +3,7 @@ import load
 from parameters import Parameter as param
 import tqdm
 
-class AngleDif():
+class AUSEquipment():
     def __init__(self, ang_arr, *args):
         # Removed user array to adjust number of users for grouping.
         self.rm_usr_arr = self.get_removed_user_arr(ang_arr)
@@ -11,6 +11,7 @@ class AngleDif():
         # Angle array without removed users.
         self.ang_arr = ang_arr
         self.usr_n = len(self.ang_arr)
+        self.usrs_per_group = param.users_per_group
         # closest user information
         self.cls_arr = np.zeros(self.usr_n, dtype=int)-1
         self.cls_ad = np.zeros(self.usr_n)-1
@@ -113,12 +114,11 @@ class AngleDif():
         self.set_user_original_iterations()
 
     def get_removed_user_arr(self, ang_arr):
-        usrs_per_group = param.users_per_group
         usr_n = len(ang_arr)
-        rm_usr_n = usr_n % usrs_per_group
+        rm_usr_n = usr_n % self.usrs_per_group
         if rm_usr_n == 0:
             return np.array([])
-        group_size = int(usr_n/usrs_per_group)
+        group_size = int(usr_n/self.usrs_per_group)
         rm_usr_arr = np.array([i for i in range(0,usr_n,group_size)])
         return rm_usr_arr
 
@@ -162,13 +162,15 @@ class AngleDif():
         new_ang_dif_arr = np.delete(self.cls_ang_dif_arr, self.rm_usr_arr, 0)
         return new_ang_dif_arr
 
-    def get_AD(self, usr1, usr2):
-        usr_origs = self.get_usr_iter_origs([usr1, usr2])
+    def get_ad(self, usr1, usr2):
+        usr_origs = self.usr_orig_iter[np.array([usr1,usr2])]
         ad = self.calc_ad(usr_origs[0], usr_origs[1])
         return ad
 
     def get_ang_dif(self, usr1, usr2):
-        usr_origs = self.get_usr_iter_origs([usr1,usr2])
+        usr_origs = self.usr_orig_iter[np.array([usr1,usr2])]
         ang_dif = self.calc_ang_dif(usr_origs[0], usr_origs[1])
         return ang_dif
     
+    def get_users_per_group(self):
+        return self.usrs_per_group

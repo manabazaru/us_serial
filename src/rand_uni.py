@@ -9,5 +9,3 @@ def generate_random_uniform_usr_xy(size):
     y = com_r_arr*np.sin(az_rad)
     xy_arr = np.array([x,y]).T
     return xy_arr
-
-    
