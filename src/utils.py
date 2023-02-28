@@ -123,6 +123,14 @@ def xy2xyz(xy_arr, z):
 def ang2angr(ang_arr, r):
     return add_factor(ang_arr, r)
 
+def ang2angr_with_z(ang_arr, z):
+    if ang_arr.ndim == 1:
+        el = ang_arr[1]
+    else:
+        el = ang_arr[:,1]
+    r = z/np.tan(el)
+    return add_factor(ang_arr, r)
+
 def rotate_with_yaw(xyz_arr, angle):
     new_xyz_arr = np.zeros(xyz_arr.shape)
     ang_rad = np.deg2rad(angle)
