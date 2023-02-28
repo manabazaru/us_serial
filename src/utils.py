@@ -149,3 +149,9 @@ def rotate_with_pitch(xyz_arr, angle):
             new_xyz_arr[usr] = np.dot(rotate_matrix, xyz_arr[usr])
     return new_xyz_arr
 
+def calc_az_dif(az1, az2):
+    az_dif = abs(az1-az2)
+    if az_dif > 180:
+        az_dif = 360 - az_dif
+    return az_dif
+
