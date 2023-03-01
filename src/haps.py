@@ -34,6 +34,7 @@ class CyrindricalHAPS(HAPS):
         self.dv = 0.6 * self.wv_len
         self.ant_height = param.antenna_height
         self.altitude = param.z
+        self.set_all()
 
     def set_side_antenna_vector_direction(self):
         vec_ang_dif = 360/self.sd_h_n

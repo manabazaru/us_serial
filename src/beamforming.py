@@ -9,6 +9,7 @@ class BeamForming():
         self.ang_arr = angr_arr[:,:,:2]
         self.d_arr = angr_arr[:,:,2]
         self.wv_len = param.c/param.carrier_freq
+        self.is_set = False
         # for channel coefficient h
         self.path_loss = np.zeros([self.usr_n, self.ant_n])
         self.phs_rot = np.zeros([self.usr_n, self.ant_n],dtype=complex)
@@ -22,6 +23,7 @@ class BeamForming():
         self.sd_att = param.side_lobe_attenuation
         self.trans_gain = param.trans_gain
         self.rcv_gain = param.rcv_gain
+        
         
     def herm_transpose(self, matrix):
         return np.conjugate(matrix.T)
@@ -64,11 +66,24 @@ class BeamForming():
     def set_all(self):
         self.set_h()
         self.set_w()
+        self.is_set = True
 
+    def get_usr_n(self):
+        return self.usr_n
+    
+    def get_h(self):
+        return self.h
+    
+    def get_w(self):
+        return self.w
+    
+    def get_is_set(self):
+        return self.is_set
 
 class ZeroForcing(BeamForming):
     def __init__(self, angr_arr):
         super().__init__(angr_arr)
+        self.set_all()
     
     def set_w(self):
         hherm = self.herm_transpose(self.h)

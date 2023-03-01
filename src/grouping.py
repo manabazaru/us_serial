@@ -56,6 +56,9 @@ class Grouping():
     def get_group_table(self):
         return self.group_table
     
+    def get_min_ad_arr(self):
+        return self.min_ad_arr
+    
     def raise_before_assignment_group_table_error(self):
         if -1 in self.group_table:
             raise AttributeError('[INFO ERROR] calc_min_ad method is called '+

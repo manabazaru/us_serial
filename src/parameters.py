@@ -15,7 +15,8 @@ class Parameter:
     side_lobe_attenuation = 30
     trans_gain = 8
     rcv_gain = -3
-    trans_pwr = 120
     # for eval
     noise_figure = 5
     bandwidth = 1.8 * 10**7
+    trans_pwr = 120
+    noise_power_density = -174
