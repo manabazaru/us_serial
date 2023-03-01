@@ -1,5 +1,4 @@
 from parameters import Parameter as param
-import utils
 import numpy as np
 
 class BeamForming():

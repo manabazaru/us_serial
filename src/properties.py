@@ -7,7 +7,7 @@ class Property:
     # directory or path for each data
     angle_path = './data/csv/angle/ang_'
     xy_path = './data/csv/xy/xy_'
-    angle_dif_path = './data/csv/angle_dif/af_'
+    cls_usr_path = './data/csv/closest_user/cls_'
     eval_path = './data/csv/eval/ev_'
     fig_path = './data/fig/'
     group_path = {'AUS'       : './data/csv/group/AUS/grp_',

@@ -79,13 +79,13 @@ def calc_az(*args):
     x, y, z = get_data_from_args(args)
     az_rad = np.arctan2(y,x)
     az = np.rad2deg(az_rad)
-    return az_rad
+    return az
 
 def calc_el(*args):
     x, y, z = get_data_from_args(args)
     r = np.sqrt(x**2+y**2+z**2)
     el_rad = np.arcsin(z/r)
-    el = np.deg2rad(el_rad)
+    el = np.rad2deg(el_rad)
     return el
 
 def calc_r(*args):
@@ -162,4 +162,3 @@ def calc_az_dif(az1, az2):
     if az_dif > 180:
         az_dif = 360 - az_dif
     return az_dif
-

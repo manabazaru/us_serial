@@ -34,9 +34,10 @@ def save_group_table(group_table, alg, ds_type):
     save_csv(group_table, path)
     print(f'[INFO SAVE] Group table of {ds_type} users with generating {alg} is saved in {path}')
 
-# incomplete
-def save_angle_dif_arr(ang_dif, ds_type):
-    pass
+def save_closest_user_arr(cls_usr_arr, ds_type):
+    path = prop.cls_usr_path + ds_type + '.csv'
+    save_csv(cls_usr_arr, path)
+    print(f'[INOF SAVE] Closest user data of {ds_type} is saved in {path}')
 
 def save_eval_arr(eval_arr, ds_type):
     path = prop.eval_path + ds_type + '.csv'
