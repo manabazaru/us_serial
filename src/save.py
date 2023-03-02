@@ -2,10 +2,6 @@ import csv
 import numpy as np
 from properties import Property as prop
 
-"""
-fig, csv(angle, xy, group, angle_dif, eval)
-"""
-
 def save_csv(data_arr, path):
     dim = data_arr.ndim
     size = len(data_arr)

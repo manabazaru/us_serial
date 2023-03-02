@@ -1,6 +1,8 @@
 import load
 import save
 import utils
+import grouping
+from us_equipment import AUSEquipment
 from properties import Property as prop
 from parameters import Parameter as param
 import numpy as np
@@ -16,3 +18,10 @@ def save_city_csv(city):
 def save_cities_csv():
     for city in prop.cities:
         save_city_csv(city)
+
+def AUS_test(city):
+    ang_arr = load.load_angle(city)
+    eqpt = AUSEquipment(ang_arr)
+    aus = grouping.AUS(eqpt)
+    aus.execute_AUS()
+    aus.print_group_info()

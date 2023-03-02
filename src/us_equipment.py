@@ -48,12 +48,16 @@ class AUSEquipment():
         self.cls_arr[usr] = cls_usr
 
     def set_closest_user_original(self, args):
+        print("[INFO EQPT] Closest user data will be started to calculate.")
         if len(args) == 0 or args[0] is None:
-            ad_table = np.ones([self.usr_n, self.usr_n])
-            for usr1 in range(self.usr_n):
+            ad_table = np.ones([self.usr_n, self.usr_n])*-1
+            print("[INFO EQPT] There is no closest user data in input."+
+                  " Start calculating ad_table.")
+            for usr1 in tqdm.tqdm(range(self.usr_n)):
                 for usr2 in range(usr1+1, self.usr_n):
                     ad_table[usr1, usr2] = self.calc_ad(usr1, usr2)
-            for usr1 in range(self.usr_n):
+            print("            Start searching minAD of each user.")
+            for usr1 in tqdm.tqdm(range(self.usr_n)):
                 min_ad = 360
                 cls_usr = -1
                 for usr2 in range(self.usr_n):
@@ -87,6 +91,8 @@ class AUSEquipment():
             elif self.cls_arr_orig[usr] in self.rm_usr_arr:
                 recheck_usr_list.append(usr)
         for usr in tqdm.tqdm(range(self.usr_n)):
+            if usr in self.rm_usr_arr:
+                continue
             if usr in recheck_usr_list:
                 min_ad = 360
                 min_dif = np.zeros(2)
@@ -110,12 +116,14 @@ class AUSEquipment():
 
     def set_all(self, args):
         self.set_closest_user_original(args)
+        print("finish a")
         self.set_closest_user()
+        print("finish b")
         self.set_user_original_iterations()
 
     def get_removed_user_arr(self, ang_arr):
         usr_n = len(ang_arr)
-        rm_usr_n = usr_n % self.usrs_per_group
+        rm_usr_n = usr_n % param.users_per_group
         if rm_usr_n == 0:
             return np.array([])
         group_size = int(usr_n/self.usrs_per_group)

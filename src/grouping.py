@@ -64,6 +64,18 @@ class Grouping():
             raise AttributeError('[INFO ERROR] calc_min_ad method is called '+
                                  'before initialization of group table')    
 
+    def print_group_info(self):
+        for group_idx in range(self.group_n):
+            group = self.sorted_min_ad_list[0,group_idx]
+            pair = self.min_ad_pair[group]
+            usr1 = self.group_table[group, pair[0]]
+            usr2 = self.group_table[group, pair[1]]
+            min_ad = self.min_ad_arr[group]
+            ang_dif = self.eqpt.get_ang_dif(usr1, usr2)
+            print("[INFO GROUP] Grouping information is describe.")
+            print(f"[{group_idx}] group {group}: minAD={min_ad}, " + 
+                  f"pair={[usr1, usr2]}, az={ang_dif[0]}, el={ang_dif[1]}")
+
 class AUS(Grouping):
     def __init__(self, eqpt: AUSEquipment, *args):
         super().__init__(eqpt)
