@@ -27,13 +27,13 @@ class GroupEvaluator():
         for usr in range(self.usr_n):
             hu = self.h[usr]
             wu = self.w[:,usr]
-            sig = abs(hu*wu)**2 * pwr_per_usr
+            sig = abs(sum(hu*wu))**2 * pwr_per_usr
             intf = 0
             for usr2 in range(self.usr_n):
                 if usr == usr2:
                     continue
                 wi = self.w[:,usr2]
-                intf += abs(hu*wi)**2 * pwr_per_usr
+                intf += abs(sum(hu*wi))**2 * pwr_per_usr
             self.sinr[usr] = sig / (intf + self.noise)
     
     def set_sum_capacity(self):
@@ -62,6 +62,7 @@ class SystemEvaluator():
         self.eval_list = [-1 for i in range(self.group_n)]
         self.sum_cap_arr = np.zeros(self.group_n)
         self.sorted_min_ad_arr = sorted_min_ad_arr
+        self.set_all()
     
     def set_eval_list(self):
         for group in range(self.group_n):
@@ -77,6 +78,10 @@ class SystemEvaluator():
                 print("[INFO ERROR] Variable <eval_list> has not been set.")
             sum_cap = self.eval_list[group].get_sum_capacity()
             self.sum_cap_arr[group] = sum_cap
+    
+    def set_all(self):
+        self.set_eval_list()
+        self.set_sum_cap_arr()
     
     def get_sum_cap_arr(self):
         return self.sum_cap_arr

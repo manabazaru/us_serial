@@ -2,7 +2,7 @@ class Parameter:
     users_per_group = 12
     z = 20
     c = 299792.458   # light speed [km/s]
-    com_range = 20   # communication range [km]
+    com_range = 100   # communication range [km]
     # for haps
     side_horizonal_antenna = 31
     side_vertical_antenna = 6
@@ -20,3 +20,5 @@ class Parameter:
     bandwidth = 1.8 * 10**7
     trans_pwr = 120
     noise_power_density = -174
+    # for m range
+    M = 20

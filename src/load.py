@@ -45,6 +45,7 @@ def load_group_table(ds_type, alg):
     d_name = f'Group table of {ds_type} with {alg}'
     path = prop.group_path[alg] + ds_type + '.csv'
     data_arr = load_csv(path, d_name)
+    data_arr = data_arr.astype(float)
     data_arr = data_arr.astype(int)
     return data_arr
 
@@ -59,5 +60,6 @@ def load_closest_user(ds_type):
     d_name = f'Closest user data of {ds_type}'
     path = prop.cls_usr_path + ds_type + '.csv'
     data_arr = load_csv(path, d_name)
+    data_arr = data_arr.astype(float)
     data_arr = data_arr.astype(int)
     return data_arr

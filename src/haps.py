@@ -72,7 +72,7 @@ class CyrindricalHAPS(HAPS):
         self.set_bottom_rot_yaw()
         self.set_antenna_xyz_arr()
     
-    def get_user_antenna_angle_arr(self, eqpt: AUSEquipment):
+    def get_user_antenna_angle_r_arr(self, eqpt: AUSEquipment):
         print("[INFO HAPS] Calculation of user angle from each antenna "+
               "element has been started.")
         ang_arr = eqpt.get_ang_all()

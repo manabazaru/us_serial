@@ -90,4 +90,4 @@ class ZeroForcing(BeamForming):
         w_unnorm = np.dot(hherm, (np.linalg.inv(h_hherm)))
         for usr in range(self.usr_n):
             w_usr_sum = np.sqrt(sum(w_unnorm[:,usr]**2))
-            self.w[:,usr] = w_unnorm / w_usr_sum
+            self.w[:,usr] = w_unnorm[:,usr] / w_usr_sum
