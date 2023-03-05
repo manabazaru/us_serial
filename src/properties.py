@@ -3,7 +3,7 @@ class Property:
     # type list of dataset. 'random' is added to cities.
     ds_type_list = ['sendai', 'tokyo', 'yagami', 'nagoya', 'osaka', 'random_uniform']
     # userable algorithm list
-    alg_list = ['AUS', 'azimuth_US', 'SMUS']
+    alg_list = ['AUS', 'azimuth_US', 'SMUS', 'AAUS']
     # directory or path for each data
     angle_path = './data/csv/angle/ang_'
     xy_path = './data/csv/xy/xy_'
@@ -18,6 +18,7 @@ class Property:
                 'yagami': './data/mat/yagami_20km_scale_0.0005_date_20210129.mat',
                 'nagoya': './data/mat/nagoya_20km_scale_0.005_date_20210129.mat',
                 'osaka' : './data/mat/osaka_20km_scale_0.0005_date_20210129.mat'}
+    usr_ant_path = {'cylindrical': './data/csv/HAPS/cylindrical/ua_'}
 
 class FigProperty:
     pass

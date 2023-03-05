@@ -128,7 +128,8 @@ def ang2angr_with_z(ang_arr, z):
         el = ang_arr[1]
     else:
         el = ang_arr[:,1]
-    r = z/np.tan(el)
+    el_rad = np.deg2rad(el)
+    r = z/np.sin(el_rad)
     return add_factor(ang_arr, r)
 
 def rotate_with_yaw(xyz_arr, angle):
@@ -162,3 +163,18 @@ def calc_az_dif(az1, az2):
     if az_dif > 180:
         az_dif = 360 - az_dif
     return az_dif
+
+def calc_ang_dif(arr1, arr2):
+    ang_dif = abs(arr1-arr2)
+    az_dif = ang_dif[0]
+    if az_dif > 180:
+        az_dif = 360 - az_dif
+    ang_dif[0] = az_dif
+    return ang_dif
+
+def turn_el(ang_arr):
+    new_ang_arr = np.zeros(ang_arr.shape)
+    new_ang_arr[:,:] = ang_arr[:,:]
+    if ang_arr[0,1] < 0:
+        new_ang_arr[:,1] *= -1
+    return new_ang_arr

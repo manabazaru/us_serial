@@ -80,7 +80,7 @@ class CyrindricalHAPS(HAPS):
         usr_angr_arr = utils.ang2angr_with_z(ang_arr, -self.altitude)
         usr_xyz_arr = utils.angr2xyz(usr_angr_arr)
         usr_sd_angr = np.zeros([usr_n, self.sd_n, 3])
-        usr_btm_angr = np.zeros([usr_n, self.sd_n, 3])
+        usr_btm_angr = np.zeros([usr_n, self.btm_n, 3])
         usr_ant_angr = np.zeros([usr_n, self.ant_n, 3])
         flt_sd_xyz_arr = self.sd_xyz_arr.reshape(self.sd_n,3)
         flt_sd_vec_dir = self.sd_vec_dir.reshape(self.sd_n)

@@ -2,7 +2,6 @@ class Parameter:
     users_per_group = 12
     z = 20
     c = 299792.458   # light speed [km/s]
-    com_range = 100   # communication range [km]
     # for haps
     side_horizonal_antenna = 31
     side_vertical_antenna = 6
@@ -10,6 +9,7 @@ class Parameter:
     carrier_freq = 2.5 * 10**9
     antenna_height = 4.4 * 10**-4
     # for beamforming
+    distance_unit_correction = {'km':10**3, 'm':1}
     three_bandwidth_angle = 65
     max_attenuation = 30
     side_lobe_attenuation = 30

@@ -34,6 +34,7 @@ class GroupEvaluator():
                     continue
                 wi = self.w[:,usr2]
                 intf += abs(sum(hu*wi))**2 * pwr_per_usr
+            print(f'sig: {sig}, intf: {intf}, noise: {self.noise}')
             self.sinr[usr] = sig / (intf + self.noise)
     
     def set_sum_capacity(self):
@@ -44,6 +45,7 @@ class GroupEvaluator():
         self.sum_capacity = sum_cap
     
     def set_all(self):
+        self.set_noise()
         self.set_SINR()
         self.set_sum_capacity()
     

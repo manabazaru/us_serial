@@ -43,7 +43,7 @@ def load_xy(ds_type):
 
 def load_group_table(ds_type, alg):
     d_name = f'Group table of {ds_type} with {alg}'
-    path = prop.group_path[alg] + ds_type + '.csv'
+    path = prop.group_path[alg] + '_' + alg + '_' + ds_type + '.csv'
     data_arr = load_csv(path, d_name)
     data_arr = data_arr.astype(float)
     data_arr = data_arr.astype(int)
@@ -62,4 +62,14 @@ def load_closest_user(ds_type):
     data_arr = load_csv(path, d_name)
     data_arr = data_arr.astype(float)
     data_arr = data_arr.astype(int)
+    return data_arr
+
+# incomplete
+def load_usr_haps_angle(ds_type, haps_shape):
+    d_name = f'Angles between users of {ds_type} and antenna '+ \
+             f'elements of {haps_shape} HAPS'
+    path = prop.usr_ant_path[haps_shape] + haps_shape + '_' + \
+           ds_type + '.csv'
+    data_arr = load_csv(path, d_name)
+    data_arr = data_arr.astype(float)
     return data_arr

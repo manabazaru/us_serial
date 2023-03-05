@@ -1,18 +1,19 @@
 import numpy as np
 import save
+import utils
 from parameters import Parameter as param
 import tqdm
 
 class AUSEquipment():
-    def __init__(self, ang_arr, ds_type, *args):
-        # Removed user array to adjust number of users for grouping.
-        self.rm_usr_arr = self.get_removed_user_arr(ang_arr)
-        self.rm_usr_n = len(self.rm_usr_arr)
+    def __init__(self, ang_arr, *args):
         # Angle array without removed users.
         self.ang_arr = ang_arr
         self.usr_n = len(self.ang_arr)
         self.usrs_per_group = param.users_per_group
-        self.ds_type = ds_type
+        self.args = args
+        # Removed user array to adjust number of users for grouping.
+        self.rm_usr_arr = self.get_removed_user_arr(ang_arr)
+        self.rm_usr_n = len(self.rm_usr_arr)
         # closest user information
         self.cls_arr = np.zeros(self.usr_n, dtype=int)-1
         self.cls_ad = np.zeros(self.usr_n)-1
@@ -21,15 +22,13 @@ class AUSEquipment():
         self.cls_arr_orig = np.zeros(self.usr_n, dtype =int)
         self.usr_orig_iter = np.zeros(self.usr_n-self.rm_usr_n, dtype=int)
         # Set all variable
-        self.set_all(args)
+        self.set_user_original_iterations()
 
-    def calc_dif(self, arr1, arr2):
-        return abs(arr1-arr2)
 
     def calc_ang_dif(self, usr1, usr2):
         usr1_ang = self.ang_arr[usr1]
         usr2_ang = self.ang_arr[usr2]
-        ang_dif = self.calc_dif(usr1_ang, usr2_ang)
+        ang_dif = utils.calc_ang_dif(usr1_ang, usr2_ang)
         return ang_dif
 
     def calc_ad_from_ang_dif(self, ang_dif):
@@ -48,9 +47,9 @@ class AUSEquipment():
     def set_cls_usr(self, usr, cls_usr):
         self.cls_arr[usr] = cls_usr
 
-    def set_closest_user_original(self, args):
+    def set_closest_user_original(self):
         print("[INFO EQPT] Closest user data will be started to calculate.")
-        if len(args) == 0 or args[0] is None:
+        if len(self.args) == 0 or self.args[0] is None:
             ad_table = np.ones([self.usr_n, self.usr_n])*-1
             print("[INFO EQPT] There is no closest user data in input."+
                   " Start calculating ad_table.")
@@ -78,7 +77,7 @@ class AUSEquipment():
                 if cls_usr == -1:
                     raise TypeError
         else:
-            self.cls_arr_orig = args[0]
+            self.cls_arr_orig = self.args[0]
     
     def set_user_original_iterations(self):
         left_usr_n = self.usr_n-self.rm_usr_n
@@ -120,21 +119,17 @@ class AUSEquipment():
             self.cls_ad[usr] = min_ad
             self.cls_ang_dif_arr[usr] = min_dif                   
 
-    def set_all(self, args):
-        self.set_closest_user_original(args)
-        self.save_closest_user_arr_original()
-        print("finish a")
+    def set_closest_user_all(self, ds_type):
+        self.set_closest_user_original()
+        self.save_closest_user_arr_original(ds_type)
         self.set_closest_user()
-        print("finish b")
-        self.set_user_original_iterations()
-        print("finish c")
 
     def get_removed_user_arr(self, ang_arr):
         usr_n = len(ang_arr)
-        rm_usr_n = usr_n % param.users_per_group
+        rm_usr_n = usr_n % self.usrs_per_group
         if rm_usr_n == 0:
             return np.array([])
-        group_size = int(usr_n/param.users_per_group)
+        group_size = int(usr_n/rm_usr_n)
         rm_usr_arr = np.array([i for i in range(0,usr_n,group_size)])
         return rm_usr_arr
 
@@ -204,5 +199,5 @@ class AUSEquipment():
     def get_closest_user_arr_original(self):
         return self.cls_arr_orig
     
-    def save_closest_user_arr_original(self):
-        save.save_closest_user_arr(self.cls_arr_orig, self.ds_type)
+    def save_closest_user_arr_original(self, ds_type):
+        save.save_closest_user_arr(self.cls_arr_orig, ds_type)

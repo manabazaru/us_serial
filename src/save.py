@@ -26,7 +26,7 @@ def save_xy_arr(xy_arr, ds_type):
     print(f'[INFO SAVE] User xy array of {ds_type} is saved in {path}')
 
 def save_group_table(group_table, alg, ds_type):
-    path = prop.group_path[alg] + ds_type + '.csv'
+    path = prop.group_path[alg] + '_' + alg + '_' + ds_type + '.csv'
     save_csv(group_table, path)
     print(f'[INFO SAVE] Group table of {ds_type} users with generating {alg} is saved in {path}')
 
@@ -39,3 +39,10 @@ def save_eval_arr(eval_arr, ds_type):
     path = prop.eval_path + ds_type + '.csv'
     save_csv(eval_arr, path)
     print(f'[INFO SAVE] Evaluation of each {ds_type} user group is saved in {path}')
+
+# incomplete
+def save_user_HAPS_angle(usr_ant_ang_arr, haps_shape, ds_type):
+    path = prop.usr_ant_path[haps_shape] + haps_shape + '_' + ds_type + '.csv'
+    save_csv(usr_ant_ang_arr, path)
+    print(f'[INFO SAVE] Angles between users of {ds_type} and antenna elements of ' +
+          f'{haps_shape} HAPS is saved in {path}')

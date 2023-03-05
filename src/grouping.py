@@ -28,9 +28,7 @@ class Grouping():
         pair = np.zeros(2,dtype=int)-1
         for usr1_idx in range(self.usrs_per_group):
             usr1 = self.group_table[group, usr1_idx]
-            for usr2_idx in range(self.usrs_per_group):
-                if usr1_idx == usr2_idx:
-                    continue
+            for usr2_idx in range(usr1_idx+1, self.usrs_per_group):
                 usr2 = self.group_table[group, usr2_idx]
                 ad = self.calc_ad(usr1, usr2)
                 if ad < min_ad:
@@ -75,6 +73,8 @@ class Grouping():
             pair = self.min_ad_pair[group]
             usr1 = self.group_table[group, pair[0]]
             usr2 = self.group_table[group, pair[1]]
+            usr1_ang = self.eqpt.get_angs(usr1)
+            usr2_ang = self.eqpt.get_angs(usr2)
             min_ad = self.min_ad_arr[group]
             ang_dif = self.eqpt.get_ang_dif(usr1, usr2)
             print(f"[{group_idx}] group {group}: minAD={min_ad}, " + 
@@ -86,6 +86,7 @@ class AUS(Grouping):
         self.alg_name = 'AUS'
         # ndarray(1): AD table. row_idx < col_idx blocks are unusable.
         self.dif_table = np.zeros([self.usr_n, self.usr_n]) - 1
+        self.swap_cnt = 0
         self.init_group_table(args)
     
     def swap(self, group1, group2, usr1_idx, usr2_idx):
@@ -104,9 +105,10 @@ class AUS(Grouping):
         ad2, pair2 = self.calc_min_ad(group2)
         min_ad = min(ad1, ad2)
         if min_ad > min_ad_prev:
-            self.set_min_ad(group1, ad1, pair2)
-            self.set_min_ad(group2, ad2, pair1)
+            self.set_min_ad(group1, ad1, pair1)
+            self.set_min_ad(group2, ad2, pair2)
             swapped = True
+            self.swap_cnt += 1
         else:
             self.swap(group1, group2, usr1_idx, usr2_idx)
         return swapped
@@ -126,9 +128,11 @@ class AUS(Grouping):
     
     def execute_AUS(self):
         self.raise_before_assignment_group_table_error()
+        print("[INFO GROUP] AUS grouping has been started.")
         self.set_min_ad_all()
         self.set_sorted_min_ad_list()
         swapped = False
+        print("             Start swapping.")
         while True:
             group_worst = int(self.sorted_min_ad_list[0,0])
             for group_idx in range(1, self.group_n):
@@ -141,10 +145,25 @@ class AUS(Grouping):
                 swapped = False
             else:
                 break
-    
-    class MRangeAUS(Grouping):
-        def __init__(self, eqpt: AUSEquipment):
-            super().__init__(eqpt)
-            self.M = param.M
-            self.ang_arr = eqpt.get_ang_all()
-            self.az_
+
+
+class RUS(Grouping):
+    def __init__(self, eqpt: AUSEquipment):
+        super().__init__(eqpt)
+        self.alg_name = 'RUS'
+
+    def execute_RUS(self):
+        aranged_arr = np.arange(self.usr_n, dtype=int)
+        np.random.shuffle(aranged_arr)
+        self.group_table = aranged_arr.reshape([self.group_n,
+                                                self.usrs_per_group])
+        self.set_min_ad_all()
+        self.set_sorted_min_ad_list()
+
+
+class MRangeAUS(Grouping):
+    def __init__(self, eqpt: AUSEquipment):
+        super().__init__(eqpt)
+        self.M = param.M
+        self.ang_arr = eqpt.get_ang_all()
+        self.az_
