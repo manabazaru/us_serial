@@ -166,5 +166,4 @@ def test_utils():
     angr_arr = utils.ang2angr_with_z(ang_arr, -20)
     print(angr_arr)
 
-test_AUS()
-print(1j)
+test_RUS()
