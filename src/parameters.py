@@ -21,8 +21,10 @@ class Parameter:
     trans_pwr = 120
     noise_power_density = -174
     # for m range
-    M = 3
+    M = 5
     # for threshold
     threshold_elevation = 5
     threshold_ad = 15
     threshold = 'el'
+    area_n = 9
+    area_distance = 2

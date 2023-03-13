@@ -55,9 +55,10 @@ class Grouping():
         self.sorted_min_ad_list = min_ad_list[:,np.argsort(min_ad_list[1])]
 
     def set_sorted_az_list(self):
-        az_arr = self.ang_arr[:,0]
-        az_list = np.stack([np.arange(self.usr_n, dtype=int),
-                            az_arr])
+        ang_arr = self.eqpt.get_ang_all()
+        az_arr = ang_arr[:,0]
+        iter_arr = np.arange(self.usr_n, dtype=int)
+        az_list = np.stack([iter_arr, az_arr])
         self.sorted_az_list = az_list[:,np.argsort(az_list[1])]
     
     def get_group_table(self):
@@ -74,19 +75,22 @@ class Grouping():
             raise AttributeError('[INFO ERROR] calc_min_ad method is called '+
                                  'before initialization of group table')    
 
-    def print_group_info(self):
+    def print_group_info(self, start, end):
         print("[INFO GROUP] Grouping information is describe.")
-        for group_idx in range(self.group_n):
+        for group_idx in range(start, end+1):
             group = int(self.sorted_min_ad_list[0,group_idx])
             pair = self.min_ad_pair[group]
             usr1 = self.group_table[group, pair[0]]
             usr2 = self.group_table[group, pair[1]]
-            usr1_ang = self.eqpt.get_angs(usr1)
-            usr2_ang = self.eqpt.get_angs(usr2)
             min_ad = self.min_ad_arr[group]
             ang_dif = self.eqpt.get_ang_dif(usr1, usr2)
             print(f"[{group_idx}] group {group}: minAD={min_ad}, " + 
                   f"pair={[usr1, usr2]}, az={ang_dif[0]}, el={ang_dif[1]}")
+
+    def print_group_info_all(self):
+        start = 0
+        end = self.usr_n-1
+        self.print_group_info(start, end)
 
 class AUS(Grouping):
     def __init__(self, eqpt: AUSEquipment, *args):
@@ -129,10 +133,10 @@ class AUS(Grouping):
                                                     self.usrs_per_group])
             return
         group_table = args[0]
-        if self.group_table.shape != group_table:
+        if self.group_table.shape != group_table.shape:
             print("[INFO ERROR] Input group table has different shape.")
         else:
-            self.group_table = group_table
+            self.group_table[:,:] = group_table[:,:]
     
     def execute_AUS(self):
         self.raise_before_assignment_group_table_error()
@@ -173,7 +177,6 @@ class MRangeAUS(Grouping):
     def __init__(self, eqpt: AUSEquipment):
         super().__init__(eqpt)
         self.M = param.M
-        self.ang_arr = eqpt.get_ang_all()
         self.sorted_az_list = np.zeros([2, self.usr_n])
         self.last_idx_arr = np.zeros(self.group_n,dtype=int)-1
         self.g_head = 0
@@ -185,15 +188,16 @@ class MRangeAUS(Grouping):
     
     def calc_mrange_ad(self, group_idx, usr_idx):
         group = (self.g_head+group_idx) % self.group_n
-        usr = self.u_head + usr_idx
+        usr = int(self.sorted_az_list[0,self.u_head+usr_idx])
         g_usr_idx = self.last_idx_arr[group]
         g_usr = self.group_table[group, g_usr_idx]
         ad = self.calc_ad(usr, g_usr)
+
         return ad
     
     def get_optimal_matching(self, m):
         best_arr = np.zeros(m, dtype=int)
-        min_ad = 360
+        min_ad = 0
         ptn_list = itertools.permutations(np.arange(m, dtype=int))
         for ptn in ptn_list:
             ptn_ad = 360
@@ -202,7 +206,7 @@ class MRangeAUS(Grouping):
                 ad = self.calc_mrange_ad(g_idx, usr_idx)
                 if ptn_ad > ad:
                     ptn_ad = ad
-            if min_ad > ptn_ad:
+            if min_ad < ptn_ad:
                 best_arr = np.array(ptn)
                 min_ad = ptn_ad
         best_arr += self.u_head
@@ -222,20 +226,38 @@ class MRangeAUS(Grouping):
         group_arr = np.arange(self.g_head, self.g_head+usr_n, dtype=int)
         group_arr = group_arr % self.group_n
         for idx in range(usr_n):
-            usr = best_arr[idx]
+            usr = self.sorted_az_list[0,best_arr[idx]]
             group = group_arr[idx]
             last_idx = self.last_idx_arr[group]
-            self.group_table[group, last_idx] = usr
+            self.group_table[group, last_idx+1] = usr
             self.last_idx_arr[group] += 1
     
     def execute_MRangeAUS(self):
         self.set_sorted_az_list()
         self.init_group_table()
+        print("[INFO MRUS] MRUS algorithm has been executed.")
+        print("            Now calculating  [", end="")
+        load_period = int(self.usr_n/self.M/10)
+        load_ratio = load_period
         while self.u_head < self.usr_n:
+            if self.u_head > load_ratio:
+                print("=", end="")
+                load_ratio += load_period
             m = min(self.usr_n-self.u_head, self.M)
             best_arr = self.get_optimal_matching(m)
             self.set_usrs_to_group_table(best_arr)
             self.update_head(m)
+        print(">] 100 %")
+    
+    def print_group_info(self, start, end):
+        self.set_min_ad_all()
+        self.set_sorted_min_ad_list()
+        super().print_group_info(start, end)
+    
+    def print_group_info_all(self):
+        self.set_min_ad_all()
+        self.set_sorted_min_ad_list()
+        super().print_group_info_all()
 
 class AzimuthUS(Grouping):
     def __init__(self, eqpt: AUSEquipment):
@@ -251,24 +273,62 @@ class AzimuthUS(Grouping):
             if group_idx >= self.group_n:
                 group_idx -= self.group_n
                 set_idx += 1
-    
+
     def execute(self):
         self.set_sorted_az_list()
         self.set_group_table()
 
+
+class AzimuthAUS(Grouping):
+    def __init__(self, eqpt: AUSEquipment):
+        super().__init__(eqpt)
+        self.azimuth = AzimuthUS(eqpt)
+        self.aus = None
+    
+    def set_azimuth_US(self):
+        self.azimuth.execute()
+    
+    def execute(self):
+        self.set_azimuth_US()
+        group_table = self.azimuth.get_group_table()
+        self.aus = AUS(self.eqpt, group_table)
+        self.aus.set_min_ad_all()
+        self.aus.set_sorted_min_ad_list()
+        self.aus.execute_AUS()
+        self.group_table = self.aus.get_group_table()
+            
+    def get_group_table(self):
+        return self.group_table
+
+
 class SerialAUS(Grouping):
     def __init__(self, eqpt: AUSEquipment):
         super().__init__(eqpt)
-        self.reset_usr_list = [[] for i in range(self.usrs_per_group)]
-        self.reset_group_list = [[] for i in range(self.usrs_per_group)]
         self.th_el = param.threshold_elevation
-        self.th_ad = param.threshold_ad
-        self.is_ad = True if param.threshold == 'ad' else False
-    
+        self.area_n = param.area_n
+        self.area_distance = param.area_distance
+        self.rst_queues = [[[] for i in range(self.area_n)] for j in range(self.usrs_per_group)]
+        self.usr_list = [[] for i in range(self.usrs_per_group)]
+        self.group_area_n = np.zeros([self.usrs_per_group, self.area_n],dtype=int)
+        self.target_arr = np.zeros([self.usrs_per_group, self.area_n],dtype=int)
+        self.target_dec = np.zeros([self.area_n, self.area_n], dtype=int)
+
     def calc_el_dif(self, usr1, usr2):
         ang_dif = self.eqpt.get_ang_dif(usr1, usr2)
         return abs(ang_dif[1])
     
+    def get_elevation_range(self):
+        el_arr = self.eqpt.get_ang_all()[:,1]
+        max_el = max(el_arr)
+        min_el = min(el_arr)
+        return (min_el, max_el)
+
+    def input_to_usr_list(self, idx, usr, area):
+        self.usr_list[idx].append([usr, area])
+    
+    def remove_from_usr_list(self, idx, list_idx):
+        self.usr_list[idx][list_idx] = [-1,-1]
+
     def init_group_table(self):
         group_idx = 0
         set_idx = 0
@@ -283,13 +343,35 @@ class SerialAUS(Grouping):
     def is_under_threshold(self, group, usr1_idx, usr2_idx):
         usr1 = self.group_table[group, usr1_idx]
         usr2 = self.group_table[group, usr2_idx]
-        if self.is_ad:
-            ad = self.calc_ad(usr1, usr2)
-            is_under = True if ad < self.th_ad else False
-        else:
-            el = self.calc_el_dif(usr1, usr2)
-            is_under = True if el < self.th_el else False
+        el = self.calc_el_dif(usr1, usr2)
+        is_under = True if el < self.th_el else False
         return is_under
     
-    def remove_usrs(self):
-        self.
+    def get_area(self, usr):
+        el_range = self.get_elevation_range()
+        unit = (el_range[1] - el_range[0]) / self.area_n
+        lim = el_range[0] + unit
+        el = self.eqpt.get_angs[usr][1]
+        area_idx = 0
+        while el > lim:
+            area_idx += 1
+            lim += unit
+        return area_idx
+
+    def remove_usr(self, group, idx):
+        if idx == 0:
+            return 
+        last = idx-1
+        is_under = self.is_under_threshold(group, last, idx)
+        if not is_under:
+            return
+        usr = self.group_table[group, idx]
+        usr_area = self.get_area(usr)
+        self.input_to_usr_list(idx, usr, usr_area)
+        usr_iter = len(self.usr_list[idx])
+        last_usr = self.group_table[group, last]
+        last_usr_area = self.get_area(last_usr)
+        self.rst_queues[idx][last_usr_area].append([group, usr_iter])
+
+    
+

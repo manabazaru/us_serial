@@ -166,4 +166,40 @@ def test_utils():
     angr_arr = utils.ang2angr_with_z(ang_arr, -20)
     print(angr_arr)
 
-test_RUS()
+def test_grouping():
+    xy_arr = ru.generate_random_uniform_usr_xy(1200, 100)
+    xyz_arr = utils.xy2xyz(xy_arr, -param.z)
+    angr_arr = utils.xyz2angr(xyz_arr)
+    ang_arr = utils.angr2ang(angr_arr)
+    eqpt = AUSEquipment(ang_arr)
+    aus = grouping.AUS(eqpt)
+    aus.execute_AUS()
+    aus.print_group_info()
+    mrus = grouping.MRangeAUS(eqpt)
+    mrus.execute_MRangeAUS()
+    mrus.print_group_info()
+
+def test_AzimuthAUS(city):
+    start = 0
+    end = 100
+    ang_arr = load.load_angle(city)
+    eqpt = AUSEquipment(ang_arr)
+    aaus = grouping.AzimuthAUS(eqpt)
+    aaus.execute()
+    aaus.set_min_ad_all()
+    aaus.set_sorted_min_ad_list()
+    aaus.print_group_info(start, end)
+
+def AUS_vs_MRUS(city):
+    start = 0
+    end = 100
+    ang_arr = load.load_angle(city)
+    eqpt = AUSEquipment(ang_arr)
+    aus = grouping.AUS(eqpt)
+    aus.execute_AUS()
+    aus.print_group_info(start, end)
+    mrus = grouping.MRangeAUS(eqpt)
+    mrus.execute_MRangeAUS()
+    mrus.print_group_info(start, end)
+
+AUS_vs_MRUS('tokyo')
