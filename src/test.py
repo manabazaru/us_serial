@@ -192,14 +192,44 @@ def test_AzimuthAUS(city):
 
 def AUS_vs_MRUS(city):
     start = 0
-    end = 100
+    end = 0
     ang_arr = load.load_angle(city)
     eqpt = AUSEquipment(ang_arr)
-    aus = grouping.AUS(eqpt)
-    aus.execute_AUS()
-    aus.print_group_info(start, end)
+    # aus = grouping.AUS(eqpt)
+    # aus.execute_AUS()
+    # aus.print_group_info(start, end)
     mrus = grouping.MRangeAUS(eqpt)
     mrus.execute_MRangeAUS()
     mrus.print_group_info(start, end)
+    # mrus.print_area(param.M)
 
-AUS_vs_MRUS('tokyo')
+def test_SAUS():
+    city = 'tokyo'
+    ang_arr = load.load_angle(city)
+    eqpt = AUSEquipment(ang_arr)
+    saus = grouping.SerialAUS(eqpt)
+    saus.init_group_table()
+    saus.execute()
+    group_table = saus.get_group_table()
+    for group in range(len(group_table)):
+        print(group, group_table[group])
+    saus.set_min_ad_all()
+    saus.set_sorted_min_ad_list()
+    saus.print_group_info(0,100)
+
+
+
+print('m=1')
+for city in ['sendai', 'tokyo', 'nagoya', 'osaka']:
+    print(city)
+    AUS_vs_MRUS(city)
+
+for city in ['sendai', 'tokyo', 'nagoya', 'osaka']:
+    print(city)
+    ang_arr = load.load_angle(city)
+    eqpt = AUSEquipment(ang_arr)
+    azi_us = grouping.AzimuthUS(eqpt)
+    azi_us.execute()
+    azi_us.set_min_ad_all()
+    azi_us.set_sorted_min_ad_list()
+    azi_us.print_group_info(0,0)

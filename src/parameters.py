@@ -23,8 +23,8 @@ class Parameter:
     # for m range
     M = 5
     # for threshold
-    threshold_elevation = 5
-    threshold_ad = 15
+    threshold_elevation = 10
+    threshold_ad = 20
     threshold = 'el'
     area_n = 9
     area_distance = 2

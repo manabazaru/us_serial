@@ -1,5 +1,6 @@
 from parameters import Parameter as param
 import utils
+import time
 import numpy as np
 import itertools
 from us_equipment import AUSEquipment
@@ -192,7 +193,6 @@ class MRangeAUS(Grouping):
         g_usr_idx = self.last_idx_arr[group]
         g_usr = self.group_table[group, g_usr_idx]
         ad = self.calc_ad(usr, g_usr)
-
         return ad
     
     def get_optimal_matching(self, m):
@@ -211,6 +211,18 @@ class MRangeAUS(Grouping):
                 min_ad = ptn_ad
         best_arr += self.u_head
         return best_arr
+    
+    def print_area(self, m):
+        usr_idx_arr = np.arange(m,dtype=int)
+        surplus = (self.usr_n-self.group_n)%m
+        for head in range(0, self.usr_n-self.group_n-surplus, m):
+            usr_arr = self.sorted_az_list[0, usr_idx_arr+head].astype(int)
+            usr2_arr = self.sorted_az_list[0, usr_idx_arr+head+self.group_n].astype(int)
+            el_arr = self.eqpt.get_angs(usr_arr)[:,1]
+            el2_arr = self.eqpt.get_angs(usr2_arr)[:,1]
+            el_arr_int = ((el_arr+90)/5).astype(int)
+            el2_arr_int = ((el2_arr+90)/5).astype(int)
+            print(head, el_arr_int, el2_arr_int)
     
     def init_group_table(self):
         usr_idx = 0
@@ -306,12 +318,11 @@ class SerialAUS(Grouping):
         super().__init__(eqpt)
         self.th_el = param.threshold_elevation
         self.area_n = param.area_n
-        self.area_distance = param.area_distance
+        self.max_area_dis = param.area_distance
         self.rst_queues = [[[] for i in range(self.area_n)] for j in range(self.usrs_per_group)]
         self.usr_list = [[] for i in range(self.usrs_per_group)]
-        self.group_area_n = np.zeros([self.usrs_per_group, self.area_n],dtype=int)
-        self.target_arr = np.zeros([self.usrs_per_group, self.area_n],dtype=int)
-        self.target_dec = np.zeros([self.area_n, self.area_n], dtype=int)
+        self.group_rank_arr = np.zeros([self.usrs_per_group, self.area_n],dtype=int)
+        self.usr_rank_arr = np.zeros([self.usrs_per_group, self.area_n],dtype=int)
 
     def calc_el_dif(self, usr1, usr2):
         ang_dif = self.eqpt.get_ang_dif(usr1, usr2)
@@ -330,6 +341,7 @@ class SerialAUS(Grouping):
         self.usr_list[idx][list_idx] = [-1,-1]
 
     def init_group_table(self):
+        self.set_sorted_az_list()
         group_idx = 0
         set_idx = 0
         for usr_idx in range(self.usr_n):
@@ -351,7 +363,7 @@ class SerialAUS(Grouping):
         el_range = self.get_elevation_range()
         unit = (el_range[1] - el_range[0]) / self.area_n
         lim = el_range[0] + unit
-        el = self.eqpt.get_angs[usr][1]
+        el = self.eqpt.get_angs(usr)[1]
         area_idx = 0
         while el > lim:
             area_idx += 1
@@ -373,5 +385,123 @@ class SerialAUS(Grouping):
         last_usr_area = self.get_area(last_usr)
         self.rst_queues[idx][last_usr_area].append([group, usr_iter])
 
+    def remove_usrs(self, idx):
+        for group in range(self.group_n):
+            self.remove_usr(group, idx)
     
+    def seek_target_usr(self, idx, usr_idx, group_area, distance):
+        target_idx = usr_idx
+        dif = 1
+        head = 0
+        tail = len(self.usr_list[idx])-1
+        flg = False
+        while True:
+            target_idx += dif
+            dif = -1*(abs(dif)+1)*np.sign(dif)
+            if (target_idx < head) or (tail < target_idx):
+                if flg:
+                    return None
+                flg = True
+                continue
+            flg = False
+            area = self.usr_list[idx][target_idx][1]
+            if area == -1:
+                continue
+            if abs(area-group_area) > distance:
+                return target_idx
+    
+    def seek_worst_usr(self, idx, usr_idx, group_area):
+        target_idx = -1
+        head = 0
+        tail = len(self.usr_list[idx])
+        for usr_idx in range(head, tail):
+            usr_area = self.usr_list[idx][target_idx][1]
+            if usr_area == group_area:
+                target_idx = usr_idx
+        if target_idx == -1:
+            raise ValueError('could not be found the target in seek_worst_usr')
+        return target_idx
+    
+    def redistribute_usrs_with_input_distance(self, idx, distance):
+        dec_arr = np.zeros([self.area_n, self.area_n],dtype=int)
+        target_arr = np.zeros(self.area_n, dtype=int)
+        # set arr and list
+        for i in range(len(dec_arr)):
+            for j in range(len(dec_arr[i])):
+                if abs(i-j) > distance:
+                    dec_arr[i,j] -= 1
+                    target_arr[i] += self.usr_rank_arr[idx, j]
+        while True:
+            min_area = -1
+            min_dif = self.usr_n
+            for area in range(len(self.group_rank_arr[idx])):
+                if self.group_rank_arr[idx,area] == 0:
+                    continue
+                dif = target_arr[area] - self.group_rank_arr[idx,area]
+                if dif < min_dif:
+                    min_area = area
+                    min_dif = dif
+            if min_dif < 0:
+                return False
+            elif min_dif == self.usr_n:
+                return True
+            group, usr_idx = self.rst_queues[idx][min_area].pop(0)
+            target_idx = self.seek_target_usr(idx, usr_idx, min_area, distance)
+            if target_idx is None:
+                raise ValueError()
+            target_usr, usr_area = self.usr_list[idx][target_idx]
+            self.group_table[group, idx] = target_usr
+            self.remove_from_usr_list(idx, target_idx)
+            self.usr_rank_arr[idx, usr_area] -= 1
+            target_arr += dec_arr[usr_area]
+            self.group_rank_arr[idx, min_area] -= 1
+    
+    def redistribute_worst_usr(self, idx):
+        target_arr = np.zeros(self.area_n,dtype=int)
+        for i in range(self.area_n):
+            for j in range(self.area_n):
+                if abs(i-j) != 0:
+                    target_arr[i] += self.usr_rank_arr[idx, j]
+        min_dif = self.usr_n
+        min_area = -1
+        for area in range(self.area_n):
+            dif = target_arr[area] - self.group_rank_arr[idx, area]
+            if dif < min_dif:
+                min_dif = dif
+                min_area = area
+        if min_dif != -1:
+            raise ValueError('It is not the worst situation.')
+        group, usr_idx = self.rst_queues[idx][min_area].pop(0)
+        target_idx = self.seek_worst_usr(idx, usr_idx)
+        target_usr, usr_area = self.usr_list[idx][target_idx]
+        self.group_table[group, idx] = target_usr
+        self.remove_from_usr_list(idx, target_idx)
+        self.usr_rank_arr[idx, usr_area] -= 1
+        self.group_rank_arr[idx, min_area] -= 1
+            
+    def redistribute_usrs(self, idx):
+        for area in range(self.area_n):
+            group_n = len(self.rst_queues[idx][area])
+            self.group_rank_arr[idx, area] += group_n
+        for usr_idx in range(len(self.usr_list[idx])):
+            usr_area = self.usr_list[idx][usr_idx][1]
+            self.usr_rank_arr[idx, usr_area] += 1
+        while True:
+            max_dis = self.max_area_dis
+            for dis in range(max_dis, -1, -1):
+                is_complete = self.redistribute_usrs_with_input_distance(idx, dis)
+                if is_complete:
+                    break
+            if is_complete:
+                break
+            else:
+                self.redistribute_worst_usr(idx)
+    
+    def execute(self):
+        for idx in range(1, self.usrs_per_group):
+            self.remove_usrs(idx)
+            self.redistribute_usrs(idx)
+        
+        
+            
 
