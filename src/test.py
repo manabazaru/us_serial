@@ -217,19 +217,23 @@ def test_SAUS():
     saus.set_sorted_min_ad_list()
     saus.print_group_info(0,100)
 
-
-
-print('m=1')
-for city in ['sendai', 'tokyo', 'nagoya', 'osaka']:
-    print(city)
-    AUS_vs_MRUS(city)
-
-for city in ['sendai', 'tokyo', 'nagoya', 'osaka']:
-    print(city)
+def test_SerialSlideAUS(city):
+    city_th = param.city_threshold_ad[city]
     ang_arr = load.load_angle(city)
     eqpt = AUSEquipment(ang_arr)
-    azi_us = grouping.AzimuthUS(eqpt)
-    azi_us.execute()
-    azi_us.set_min_ad_all()
-    azi_us.set_sorted_min_ad_list()
-    azi_us.print_group_info(0,0)
+    ssaus = grouping.SerialSlideAUS(eqpt, city_th)
+    ssaus.execute()
+    ssaus.set_min_ad_all()
+    ssaus.set_sorted_min_ad_list()
+    ssaus.print_group_info_all()
+
+def test_AUS2(city):
+    ang_arr = load.load_angle(city)
+    eqpt = AUSEquipment(ang_arr)
+    aus = grouping.AUS(eqpt)
+    aus.execute_AUS()
+    aus.print_group_info_all()
+
+print('m=1')
+city = 'tokyo'
+test_SerialSlideAUS(city)

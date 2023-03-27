@@ -28,3 +28,8 @@ class Parameter:
     threshold = 'el'
     area_n = 9
     area_distance = 2
+    city_threshold_ad = {'sendai': [16,20],
+                         'tokyo': [19.6, 24.6],
+                         'nagoya': [24.5, 29.5],
+                         'osaka': [18.7, 23.7]
+                        }

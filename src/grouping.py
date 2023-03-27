@@ -312,6 +312,72 @@ class AzimuthAUS(Grouping):
     def get_group_table(self):
         return self.group_table
 
+class SerialSlideAUS(Grouping):
+    def __init__(self, eqpt: AUSEquipment, th):
+        super().__init__(eqpt)
+        self.th_ad_list = th
+        self.under_th_group = [i for i in range(self.group_n)]
+    
+    def init_group_table(self):
+        self.set_sorted_az_list()
+        group_idx = 0
+        set_idx = 0
+        for usr_idx in range(self.usr_n):
+            usr = self.sorted_az_list[0,usr_idx]
+            self.group_table[group_idx, set_idx] = usr
+            group_idx += 1
+            if group_idx >= self.group_n:
+                group_idx -= self.group_n
+                set_idx += 1
+    
+    def update_under_threshold_group(self):
+        new_list = []
+        low = self.th_ad_list[0]
+        high = self.th_ad_list[1]
+        for group in self.under_th_group:
+            min_ad, pair = self.calc_min_ad(group)
+            self.set_min_ad(group, min_ad, pair)
+            if min_ad < low or high < min_ad:
+                new_list.append(group)
+        self.under_th_group = new_list
+        
+    def slide_users(self, pair_idx):
+        group1 = self.under_th_group[0]
+        usr1_idx = self.min_ad_pair[group1, pair_idx]
+        usr1 = self.group_table[group1, usr1_idx]
+        for grp_idx in range(len(self.under_th_group)-1):
+            group2 = self.under_th_group[grp_idx+1]
+            usr2_idx = self.min_ad_pair[group2, pair_idx]
+            usr2 = self.group_table[group2, usr2_idx]
+            self.group_table[group2, usr2_idx] = usr1
+            usr1 = usr2
+        group2 = self.under_th_group[0]
+        usr2_idx = self.min_ad_pair[group2, pair_idx]
+        self.group_table[group2, usr2_idx] = usr1
+    
+    def execute(self):
+        self.init_group_table()
+        cnt = 0
+        under_th_n = self.group_n
+        while True:
+            print(under_th_n)
+            self.update_under_threshold_group()
+            if under_th_n == len(self.under_th_group):
+                print('no change')
+                cnt += 1
+            elif under_th_n == 0:
+                print('finish')
+                break
+            else:
+                cnt = 0
+            if cnt > 200:
+                print('over 1000')
+                break
+            pair_idx = np.random.randint(0,2)
+            self.slide_users(pair_idx)
+            under_th_n = len(self.under_th_group)
+            
+            
 
 class SerialAUS(Grouping):
     def __init__(self, eqpt: AUSEquipment):
@@ -501,7 +567,8 @@ class SerialAUS(Grouping):
         for idx in range(1, self.usrs_per_group):
             self.remove_usrs(idx)
             self.redistribute_usrs(idx)
-        
+    
+    
         
             
 
