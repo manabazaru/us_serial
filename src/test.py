@@ -12,6 +12,7 @@ from us_equipment import AUSEquipment
 from properties import Property as prop
 from parameters import Parameter as param
 import numpy as np
+import time
 
 path.set_cur_dir()
 np.set_printoptions(threshold=np.inf)
@@ -221,11 +222,37 @@ def test_SerialSlideAUS(city):
     city_th = param.city_threshold_ad[city]
     ang_arr = load.load_angle(city)
     eqpt = AUSEquipment(ang_arr)
+    all_xy = utils.xyz2xy(utils.angr2xyz(utils.ang2angr_with_z(eqpt.get_ang_all(), -param.z)))
     ssaus = grouping.SerialSlideAUS(eqpt, city_th)
     ssaus.execute()
     ssaus.set_min_ad_all()
     ssaus.set_sorted_min_ad_list()
+    ssaus.print_group_info(0, 10)
+    unapp_usrs = ssaus.get_unappropriate_users()
+    usr_angs = eqpt.get_angs(unapp_usrs)
+    usr_angrs = utils.ang2angr_with_z(usr_angs, -param.z)
+    usr_xyz = utils.angr2xyz(usr_angrs)
+    usr_xy = utils.xyz2xy(usr_xyz)
+    # fig.plt_all_users(all_xy)
+    fig.plt_all_users(usr_xy)
+
+def test_SerialSlideAUS2(city):
+    city_th = param.city_threshold_ad[city]
+    ang_arr = load.load_angle(city)
+    eqpt = AUSEquipment(ang_arr)
+    all_xy = utils.xyz2xy(utils.angr2xyz(utils.ang2angr_with_z(eqpt.get_ang_all(), -param.z)))
+    ssaus = grouping.SerialSlideAUS2(eqpt, city_th)
+    ssaus.execute()
+    ssaus.set_min_ad_all()
+    ssaus.set_sorted_min_ad_list()
     ssaus.print_group_info_all()
+    unapp_usrs = ssaus.get_unappropriate_users()
+    usr_angs = eqpt.get_angs(unapp_usrs)
+    usr_angrs = utils.ang2angr_with_z(usr_angs, -param.z)
+    usr_xyz = utils.angr2xyz(usr_angrs)
+    usr_xy = utils.xyz2xy(usr_xyz)
+    fig.plt_all_users(all_xy)
+    fig.plt_all_users(usr_xy)
 
 def test_AUS2(city):
     ang_arr = load.load_angle(city)
@@ -235,5 +262,8 @@ def test_AUS2(city):
     aus.print_group_info_all()
 
 print('m=1')
-city = 'tokyo'
+city = 'nagoya'
 test_SerialSlideAUS(city)
+# SerialSlideAUS 
+#  osaka: 2/353, tokyo: 8/578, sendai: 40/604, nagoya: 70/1914
+# test_AUS2(city)

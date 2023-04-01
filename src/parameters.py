@@ -25,11 +25,13 @@ class Parameter:
     # for threshold
     threshold_elevation = 10
     threshold_ad = 20
+    random_group_n = 2
+    random_add_group_n = 2
     threshold = 'el'
     area_n = 9
     area_distance = 2
-    city_threshold_ad = {'sendai': [16,20],
-                         'tokyo': [19.6, 24.6],
-                         'nagoya': [24.5, 29.5],
-                         'osaka': [18.7, 23.7]
+    city_threshold_ad = {'sendai': [16,20],       # original: 16, 20
+                         'tokyo': [19.6, 24.6],   # original: 19.6, 24.5
+                         'nagoya': [24.5, 29.5],  # original: 24.5, 29.5
+                         'osaka': [18.7, 22]    # original: 18.7, 23.7
                         }

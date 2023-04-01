@@ -90,7 +90,7 @@ class Grouping():
 
     def print_group_info_all(self):
         start = 0
-        end = self.usr_n-1
+        end = self.group_n-1
         self.print_group_info(start, end)
 
 class AUS(Grouping):
@@ -317,6 +317,8 @@ class SerialSlideAUS(Grouping):
         super().__init__(eqpt)
         self.th_ad_list = th
         self.under_th_group = [i for i in range(self.group_n)]
+        self.rand_grp_num = param.random_group_n
+        self.rand_add_grp_n = param.random_add_group_n
     
     def init_group_table(self):
         self.set_sorted_az_list()
@@ -330,6 +332,45 @@ class SerialSlideAUS(Grouping):
                 group_idx -= self.group_n
                 set_idx += 1
     
+    def reset_under_th_group(self, group_list):
+        unapp_group_n = len(group_list)
+        unapp_usr_n = self.usrs_per_group*unapp_group_n
+        unapp_group_table = self.group_table[np.array(group_list)]
+        usr_arr = unapp_group_table.flatten()
+        usr_angs = self.eqpt.get_angs(usr_arr)
+        azi_list = np.stack([ usr_arr, usr_angs[:,0]])
+        sorted_azi_list = azi_list[:, np.argsort(azi_list[1])]
+        group_cnt = 0
+        area_idx = 0
+        for usr_idx in range(unapp_usr_n):
+            group = group_list[group_cnt]
+            self.group_table[group, area_idx] = sorted_azi_list[0, usr_idx]
+            group_cnt += 1
+            if group_cnt >= unapp_group_n:
+                group_cnt -= unapp_group_n
+                area_idx += 1
+    
+    def add_random_group_into_under_th_group(self):
+        all_group = np.arange(self.group_n,dtype=int)
+        app_group = np.delete(all_group, self.under_th_group)
+        groups = np.random.choice(app_group, self.rand_add_grp_n, replace=False)
+        self.under_th_group = np.append(self.under_th_group, groups)
+    
+    def reset_group_with_random_group(self):
+        all_group = np.arange(self.group_n,dtype=int)
+        app_group = np.delete(all_group, self.under_th_group)
+        groups = np.random.choice(app_group, self.rand_add_grp_n, replace=False)
+        self.under_th_group = np.append(self.under_th_group, groups)
+        self.reset_under_th_group(self.under_th_group) 
+
+    def set_random_pair(self):
+        rand_range_arr = np.arange(self.usrs_per_group, dtype=int)
+        group_arr = np.random.choice(self.under_th_group, self.rand_grp_num, replace=False)
+        for grp_idx in range(len(group_arr)):
+            group = self.under_th_group[grp_idx]
+            pair = np.random.choice(rand_range_arr, 2, replace=False)
+            self.set_min_ad(group, -1, pair)
+
     def update_under_threshold_group(self):
         new_list = []
         low = self.th_ad_list[0]
@@ -357,27 +398,177 @@ class SerialSlideAUS(Grouping):
     
     def execute(self):
         self.init_group_table()
+        pair_idx = 0
+        slide_cnt = 0
+        pair_cnt = 0
+        rand_pair_cnt = 0
+        add_cnt = 0
+        limit_cnt = 0
+        prev_tgt_n = self.group_n
+        add_flg = False
+        add_reset_flg = not add_flg
+        print(prev_tgt_n)
+        while True:
+            limit_cnt += 1
+            self.update_under_threshold_group()
+            if len(self.under_th_group) == 0:
+                print('finish')
+                break
+            if prev_tgt_n > len(self.under_th_group):
+                self.slide_users(pair_idx)
+                prev_tgt_n = len(self.under_th_group)
+                slide_cnt = 0
+                pair_cnt = 0
+                rand_pair_cnt = 0
+                add_cnt = 0
+                print('\n'+str(prev_tgt_n), end='')
+                continue
+            slide_cnt += 1
+            pair_cnt += 1
+            rand_pair_cnt += 1
+            add_cnt += 1
+            if slide_cnt > 200 or (limit_cnt > self.group_n and prev_tgt_n == 2):
+                print('over')
+                break
+            if add_cnt > 50 and add_flg:
+                add_cnt = 0
+                self.add_random_group_into_under_th_group()
+                pair_cnt = 0
+                pair_idx = 0
+                rand_pair_cnt = 0
+                prev_tgt_n += self.rand_add_grp_n
+            elif add_cnt > 50 and add_reset_flg:
+                add_cnt = 0
+                self.reset_group_with_random_group()
+                pair_cnt = 0
+                pair_idx = 0
+                rand_pair_cnt = 0
+                prev_tgt_n += self.rand_add_grp_n      
+            if rand_pair_cnt > prev_tgt_n*2:
+                self.set_random_pair()
+                pair_cnt = 0
+                pair_idx = 0
+            elif pair_cnt > prev_tgt_n:
+                pair_cnt = 0
+                pair_idx = (pair_idx + 1) % 2
+            self.slide_users(pair_idx)
+            print('.', end='')
+
+    def get_unappropriate_users(self):
+        group_list = []
+        self.set_min_ad_all()
+        low = self.th_ad_list[0]
+        high = self.th_ad_list[1]
+        for group in range(self.group_n):
+            min_ad = self.min_ad_arr[group]
+            if min_ad < low or high < min_ad:
+                group_list.append(group)
+        unapp_group_n = len(group_list)
+        unapp_group_table = np.zeros([unapp_group_n, self.usrs_per_group], dtype=int)
+        for group_idx in range(unapp_group_n):
+            group = group_list[group_idx]
+            unapp_group_table[group_idx] = self.group_table[group]
+        unapp_users = unapp_group_table.flatten()
+        return unapp_users
+
+
+class SerialSlideAUS2(Grouping):
+    def __init__(self, eqpt: AUSEquipment, th):
+        super().__init__(eqpt)
+        self.th_ad_list = th
+        self.under_th_group = [i for i in range(self.group_n)]
+        self.rand_grp_num = param.random_group_n
+    
+    def init_group_table(self):
+        self.set_sorted_az_list()
+        group_idx = 0
+        set_idx = 0
+        for usr_idx in range(self.usr_n):
+            usr = self.sorted_az_list[0,usr_idx]
+            self.group_table[group_idx, set_idx] = usr
+            group_idx += 1
+            if group_idx >= self.group_n:
+                group_idx -= self.group_n
+                set_idx += 1
+    
+    def set_random_pair(self):
+        rand_range_arr = np.arange(self.usrs_per_group, dtype=int)
+        group_arr = np.random.choice(self.under_th_group, self.rand_grp_num, replace=False)
+        for grp_idx in range(len(group_arr)):
+            group = self.under_th_group[grp_idx]
+            pair = np.random.choice(rand_range_arr, 2, replace=False)
+            self.set_min_ad(group, -1, pair)
+
+    def update_under_threshold_group(self):
+        new_list = []
+        low = self.th_ad_list[0]
+        high = self.th_ad_list[1]
+        for group in self.under_th_group:
+            min_ad, pair = self.calc_min_ad(group)
+            self.set_min_ad(group, min_ad, pair)
+            if min_ad < low or high < min_ad:
+                new_list.append(group)
+        self.under_th_group = new_list
+        
+    def slide_users(self, pair_idx):
+        swap_list = [[] for i in range(self.usrs_per_group)]
+        for group in self.under_th_group:
+            for pair_idx in range(2):
+                usr_idx = self.min_ad_pair[group, pair_idx]
+                swap_list[usr_idx].append(group)
+        for area in range(self.usrs_per_group):
+            if len(swap_list[area]) < 2:
+                continue
+            head_group = swap_list[area][0]
+            head_usr = self.group_table[head_group, area]
+            for grp_idx in range(1, len(swap_list[area])):
+                group = swap_list[area][grp_idx]
+                group_prev = swap_list[area][grp_idx-1]
+                usr = self.group_table[group, area]
+                self.group_table[group_prev, area] = usr
+            tail_group = swap_list[area][-1]
+            self.group_table[tail_group, area] = head_usr
+    
+    def execute(self):
+        self.init_group_table()
         cnt = 0
         under_th_n = self.group_n
         while True:
-            print(under_th_n)
             self.update_under_threshold_group()
             if under_th_n == len(self.under_th_group):
-                print('no change')
+                print('.', end='')
                 cnt += 1
             elif under_th_n == 0:
                 print('finish')
                 break
             else:
+                print('\n'+str(under_th_n), end='')
                 cnt = 0
             if cnt > 200:
-                print('over 1000')
+                print('over')
                 break
+            elif cnt > under_th_n:
+                self.set_random_pair()
             pair_idx = np.random.randint(0,2)
             self.slide_users(pair_idx)
             under_th_n = len(self.under_th_group)
             
-            
+    def get_unappropriate_users(self):
+        group_list = []
+        self.set_min_ad_all()
+        low = self.th_ad_list[0]
+        high = self.th_ad_list[1]
+        for group in range(self.group_n):
+            min_ad = self.min_ad_arr[group]
+            if min_ad < low or high < min_ad:
+                group_list.append(group)
+        unapp_group_n = len(group_list)
+        unapp_group_table = np.zeros([unapp_group_n, self.usrs_per_group], dtype=int)
+        for group_idx in range(unapp_group_n):
+            group = group_list[group_idx]
+            unapp_group_table[group_idx] = self.group_table[group]
+        unapp_users = unapp_group_table.flatten()
+        return unapp_users
 
 class SerialAUS(Grouping):
     def __init__(self, eqpt: AUSEquipment):
