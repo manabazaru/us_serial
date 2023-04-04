@@ -132,7 +132,7 @@ def test_AUS():
     eqpt = AUSEquipment(ang_arr)
     aus = grouping.AUS(eqpt)
     aus.execute_AUS()
-    aus.print_group_info()
+    aus.print_group_info_all()
     group_table = aus.get_group_table()
     sorted_min_ad_arr = aus.get_sorted_min_ad_list()
     haps = chaps()
@@ -151,7 +151,7 @@ def test_RUS():
     eqpt = AUSEquipment(ang_arr)
     rus = grouping.RUS(eqpt)
     rus.execute_RUS()
-    rus.print_group_info()
+    rus.print_group_info_all()
     group_table = rus.get_group_table()
     sorted_min_ad_arr = rus.get_sorted_min_ad_list()
     haps = chaps()
@@ -262,8 +262,13 @@ def test_AUS2(city):
     aus.print_group_info_all()
 
 print('m=1')
-city = 'nagoya'
-test_SerialSlideAUS(city)
+city = 'osaka'
+# test_SerialSlideAUS(city)
 # SerialSlideAUS 
 #  osaka: 2/353, tokyo: 8/578, sendai: 40/604, nagoya: 70/1914
 # test_AUS2(city)
+test = 'AUS'
+if test == 'RUS':
+    test_RUS()
+elif test == 'AUS':
+    test_AUS()

@@ -7,11 +7,23 @@ from us_equipment import AUSEquipment
 class HAPS():
     def __init__(self):
         self.wv_len = param.c/param.carrier_freq
+        self.altitude = param.z
     
     def rot_usr_xyz(self, xyz, yaw, pitch):
         xyz2 = utils.rotate_with_yaw(xyz, yaw)
         xyz3 = utils.rotate_with_pitch(xyz2, pitch)
         return xyz3
+
+class PlanarHAPS(HAPS):
+    def __init__(self):
+        self.sd_n = param.planar_antenna_size_of_side
+        self.ant_n = self.sd_n ** 2
+        self.xyz_arr = np.zeros([self.sd_n, self.sd_n, 3])
+        # parameter
+        self.ant_dis = self.wv_len * 0.6
+    
+    # def set_antenna_xyz(self):
+
 
 class CyrindricalHAPS(HAPS):
     def __init__(self):
@@ -29,11 +41,10 @@ class CyrindricalHAPS(HAPS):
         self.btm_xyz_arr = np.zeros([self.btm_n, 3])
         self.btm_rot_yaw = np.zeros([self.btm_n])
         # length
-        self.h_r = 0.6 * self.wv_len * (self.sd_h_n / 2*np.pi)
+        self.h_r = 0.6 * self.wv_len * (self.sd_h_n / (2*np.pi))
         self.b_r = 0.5 * self.h_r
         self.dv = 0.6 * self.wv_len
         self.ant_height = param.antenna_height
-        self.altitude = param.z
         self.set_all()
 
     def set_side_antenna_vector_direction(self):
@@ -41,14 +52,14 @@ class CyrindricalHAPS(HAPS):
         dir_arr = np.arange(self.sd_h_n)*vec_ang_dif - 180
         for v in range(self.sd_v_n):
             self.sd_vec_dir[v,:] = dir_arr[:]
-    
+
     def set_bottom_rot_yaw(self):
         rot_ang_dif = 360/self.btm_n
         rot_ang_arr = np.arange(self.btm_n)*rot_ang_dif - 180
         self.btm_rot_yaw = rot_ang_arr
 
     def set_antenna_xyz_arr(self):
-        z = (self.sd_v_n-1) * self.dv
+        z = (self.sd_v_n-1) * self.dv / 2
         # set side antenna
         for v in range(self.sd_v_n):
             dir_rad = np.deg2rad(self.sd_vec_dir[v])
@@ -71,7 +82,7 @@ class CyrindricalHAPS(HAPS):
         self.set_side_antenna_vector_direction()
         self.set_bottom_rot_yaw()
         self.set_antenna_xyz_arr()
-    
+ 
     def get_user_antenna_angle_r_arr(self, eqpt: AUSEquipment):
         print("[INFO HAPS] Calculation of user angle from each antenna "+
               "element has been started.")
